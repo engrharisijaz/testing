@@ -1,0 +1,37 @@
+version: '3'
+
+services:
+  postgres_db:
+    image: postgres:14
+    restart: always
+    command: [ 'postgres', '-c', 'wal_level=logical' ]
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: testpassword
+      POSTGRES_DB: rosterdb
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./new_database_updated.sql:/docker-entrypoint-initdb.d/init.sql
+
+    ports:
+      - "5433:5432"
+
+
+  ubuntu_dev:
+    build: .  # Build an image using the Dockerfile in the current directory
+    volumes:
+      - .:/app  # Mount the current directory
+    working_dir: /app
+    depends_on:
+      - postgres_db
+    tty: true
+    ports:
+      - "5000:5000"
+
+    command: /bin/bash -c "python3 app.py"
+    
+
+volumes:
+  postgres-data:
+    driver: local
